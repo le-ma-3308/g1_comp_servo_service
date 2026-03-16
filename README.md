@@ -2,6 +2,8 @@
 
 [English Version](./README_EN.md)
 
+Unitree G1_comp 型号头部两自由度舵机官方提供驱动
+
 `g1_comp_servo_service` 用于通过串口控制压缩关节舵机，并对外提供 DDS 接口。
 
 本文档依据 `README.pdf` 整理，并补充了当前代码中的实际约束，方便直接部署和运行。
