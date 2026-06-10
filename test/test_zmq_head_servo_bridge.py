@@ -114,7 +114,7 @@ class ZmqHeadServoBridgeTest(unittest.TestCase):
 
     def test_decodes_22_link_float32_pose_payload(self):
         floats = []
-        head_quat = quat_from_axis_angle((0.0, 0.0, 1.0), 30.0)
+        head_quat = quat_from_axis_angle((0.0, 1.0, 0.0), 30.0)
         for link_index in range(22):
             if link_index == 0:
                 floats.extend([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
@@ -130,27 +130,45 @@ class ZmqHeadServoBridgeTest(unittest.TestCase):
 
         self.assertEqual(pelvis, [1.0, 0.0, 0.0, 0.0])
         self.assertAlmostEqual(head[0], head_quat[0], places=6)
-        self.assertAlmostEqual(head[3], head_quat[3], places=6)
+        self.assertAlmostEqual(head[2], head_quat[2], places=6)
         self.assertAlmostEqual(command.relative_yaw_deg, 30.0, places=5)
 
-    def test_computes_server_collect_mapping_from_relative_quats(self):
+    def test_computes_observed_human_axis_mapping_from_relative_quats(self):
         pelvis = [1.0, 0.0, 0.0, 0.0]
-        head = quat_from_axis_angle((0.0, 0.0, 1.0), 30.0)
 
-        command = compute_head_servo_command(head, pelvis)
+        yaw_command = compute_head_servo_command(
+            quat_from_axis_angle((0.0, 1.0, 0.0), 30.0),
+            pelvis,
+        )
+        pitch_command = compute_head_servo_command(
+            quat_from_axis_angle((1.0, 0.0, 0.0), 20.0),
+            pelvis,
+        )
+        roll_command = compute_head_servo_command(
+            quat_from_axis_angle((0.0, 0.0, 1.0), 30.0),
+            pelvis,
+        )
 
-        self.assertAlmostEqual(command.relative_pitch_deg, 0.0, places=5)
-        self.assertAlmostEqual(command.relative_yaw_deg, 30.0, places=5)
-        self.assertAlmostEqual(command.pitch_deg, 38.0, places=5)
-        self.assertAlmostEqual(command.yaw_deg, 30.0, places=5)
+        self.assertAlmostEqual(yaw_command.relative_pitch_deg, 0.0, places=5)
+        self.assertAlmostEqual(yaw_command.relative_yaw_deg, 30.0, places=5)
+        self.assertAlmostEqual(yaw_command.pitch_deg, 38.0, places=5)
+        self.assertAlmostEqual(yaw_command.yaw_deg, 30.0, places=5)
+
+        self.assertAlmostEqual(pitch_command.relative_pitch_deg, 20.0, places=5)
+        self.assertAlmostEqual(pitch_command.relative_yaw_deg, 0.0, places=5)
+        self.assertAlmostEqual(pitch_command.pitch_deg, 18.0, places=5)
+        self.assertAlmostEqual(pitch_command.yaw_deg, 0.0, places=5)
+
+        self.assertAlmostEqual(roll_command.relative_pitch_deg, 0.0, places=5)
+        self.assertAlmostEqual(roll_command.relative_yaw_deg, 0.0, places=5)
 
     def test_clamps_pitch_and_yaw_to_servo_limits(self):
         yaw_command = compute_head_servo_command(
-            head_quat=quat_from_axis_angle((0.0, 0.0, 1.0), 120.0),
+            head_quat=quat_from_axis_angle((0.0, 1.0, 0.0), 120.0),
             pelvis_quat=[1.0, 0.0, 0.0, 0.0],
         )
         pitch_command = compute_head_servo_command(
-            head_quat=quat_from_axis_angle((0.0, 1.0, 0.0), 90.0),
+            head_quat=quat_from_axis_angle((1.0, 0.0, 0.0), 90.0),
             pelvis_quat=[1.0, 0.0, 0.0, 0.0],
         )
 

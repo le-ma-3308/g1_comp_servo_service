@@ -108,15 +108,25 @@ def _quat_mul(a: Sequence[float], b: Sequence[float]) -> list[float]:
     ]
 
 
+def _remap_observed_human_axes_to_servo_axes(quat: Sequence[float]) -> list[float]:
+    """Map observed sender axes into the yaw/pitch axes used by the servo bridge."""
+    w, x, y, z = quat
+    return [w, z, x, y]
+
+
 def relative_head_angles(head_quat: Sequence[float], pelvis_quat: Sequence[float]) -> tuple[float, float]:
     """Return relative pitch/yaw degrees for head relative to pelvis.
 
     Inputs and internal math follow server_collect.py: q_rel = inverse(pelvis) * head,
-    where both quaternions are scalar-first wxyz.
+    where both quaternions are scalar-first wxyz. The live mocap stream is observed
+    as human pitch on current X, human yaw on current Y, and human roll on current Z,
+    so the relative quaternion is remapped before extracting servo pitch/yaw.
     """
     q_head = _to_float_quat(head_quat)
     q_pelvis = _to_float_quat(pelvis_quat)
-    w, x, y, z = _quat_mul(_quat_conjugate(q_pelvis), q_head)
+    w, x, y, z = _remap_observed_human_axes_to_servo_axes(
+        _quat_mul(_quat_conjugate(q_pelvis), q_head)
+    )
 
     sinp = 2.0 * (w * y - z * x)
     if sinp >= 1.0:
